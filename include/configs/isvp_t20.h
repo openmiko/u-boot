@@ -123,8 +123,9 @@
 #define BOOTARGS_COMMON "console=ttyS1,115200n8 mem=32M@0x0 ispmem=8M@0x2000000 rmem=24M@0x2800000"
 #endif
 
+
 #ifdef CONFIG_SPL_MMC_SUPPORT
-	#define CONFIG_BOOTARGS BOOTARGS_COMMON " init=/linuxrc root=/dev/mmcblk0p2 rw rootdelay=1"
+	#define CONFIG_BOOTARGS BOOTARGS_COMMON " init=/linuxrc root=/dev/mmcblk0p1 rootfstype=ext4 rootwait rw mtdparts=jz_sfc:256k(boot),2048k(kernel),3392k(root),640k(driver),4736k(appfs),2048k(backupk),640k(backupd),2048k(backupa),256k(config),256k(para),-(flag)"
 #elif CONFIG_SFC_NOR
 	#define CONFIG_BOOTARGS BOOTARGS_COMMON " init=/linuxrc rootfstype=squashfs root=/dev/mtdblock2 rw mtdparts=jz_sfc:256k(boot),2048k(kernel),3392k(root),640k(driver),4736k(appfs),2048k(backupk),640k(backupd),2048k(backupa),256k(config),256k(para),-(flag)"
 #endif
@@ -135,56 +136,12 @@
 #define CONFIG_BOOTDELAY 1
 
 #ifdef CONFIG_SPL_MMC_SUPPORT
-#define CONFIG_BOOTCOMMAND "mmc read 0x80600000 0x1800 0x3000; bootm 0x80600000"
+	#define CONFIG_BOOTCOMMAND "gpio set 43; gpio clear 48; mmc rescan; mmcinfo; ext4load mmc 0:1 0x80600000 /boot/uImage.lzma; gpio clear 43;bootm 0x80600000"
 #endif
 
+
 #ifdef CONFIG_SFC_NOR
-	#define CONFIG_BOOTCOMMAND " \
-	if printenv soctype; then \
-	  echo \"Settings are already stored!\"; \
-	else \
-	  jzsoc; saveenv; \
-	fi; \
-	if test \"${soctype}\" = \"T20L\" && test \"${flashtype}\" = \"EN25QH128A\" && i2c probe 0x40 ; then \
-	  gpio set 38; gpio set 39; gpio set 47; gpio set 43; gpio clear 48; sleep 3; gpio clear 43; if printenv hwversion; then true; else setenv hwversion SENISC5; saveenv; fi; \
-	  \
-	else if test \"${soctype}\" = \"T20X\" && test \"${flashtype}\" = \"GD25Q128\" && i2c probe 0x40 ; then \
-	  gpio set 38; gpio set 39; gpio set 47; gpio set 43; gpio clear 48; if printenv hwversion; then true; else setenv hwversion DF3; saveenv; fi; \
-	  \
-	else if test \"${soctype}\" = \"T20L\" && test \"${flashtype}\" = \"W25Q128\" ; then \
-	  gpio clear 75; gpio clear 76; gpio set 60; if printenv hwversion; then true; else setenv hwversion SXJ02ZM; saveenv; fi; \
-	  \
-	else if test \"${soctype}\" = \"T20X\" && test \"${flashtype}\" = \"EN25QH128A\" && i2c probe 0x40 ; then \
-	  gpio set 38; gpio set 39; gpio set 47; gpio set 43; gpio clear 48; sleep 3; gpio clear 43; if printenv hwversion; then true; else setenv hwversion WYZEC2; saveenv; fi; \
-	  \
-	else \
-	  if printenv count; then \
-	    if test \"${count}\" = \"1\"; then \
-	      echo \"ping: ${count}\"; setenv count 2; saveenv; \
-	      gpio set 43; gpio clear 48; sleep 3; gpio clear 43; \
-	    else \
-	      echo \"pong: ${count}\"; setenv count 1; saveenv; gpio set 43; gpio clear 48; \
-	    fi; \
-	  else \
-	    echo \"pong: ${count}\"; setenv count 1; saveenv; \
-	    gpio set 43; gpio clear 48; \
-	  fi; \
-	fi; fi; fi; fi; \
-	echo Hardware found: ${hwversion}; \
-	\
-	\
-	if mmc rescan; then \
-	  echo \"MMC Found\"; \
-	  if ext4load mmc 0:1 0x80600000 uEnv.txt; then \
-	    env import -t 0x80600000 ${filesize}; setenv bootargs \"${bootargs} hwversion=${hwversion}\"; boot; \
-	  fi; \
-	  else \
-	    echo \"MMC not found...\"; \
-	fi; \
-	gpio clear 38; \
-	sf probe; \
-	sf read 0x80600000 0x40000 0x280000; \
-	bootm 0x80600000;"
+	#define CONFIG_BOOTCOMMAND "gpio set 43; gpio clear 48; mmc rescan; mmcinfo; ext4load mmc 0:1 0x80600000 /boot/uImage.lzma; gpio clear 43;bootm 0x80600000"
 #endif /* CONFIG_SFC_NOR */
 
 /**
